@@ -1,12 +1,14 @@
+import type { LinksFunction } from "@remix-run/node";
 import {
   Links,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
+  useNavigate,
 } from "@remix-run/react";
-import type { LinksFunction } from "@remix-run/node";
 
+import { NextUIProvider } from "@nextui-org/react";
 import "./tailwind.css";
 
 export const links: LinksFunction = () => [
@@ -41,5 +43,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  const navigate = useNavigate();
+
+  return (
+    <NextUIProvider navigate={navigate}>
+      <Outlet />
+    </NextUIProvider>
+  );
 }

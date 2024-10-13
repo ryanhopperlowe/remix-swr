@@ -7,6 +7,8 @@ export const meta: MetaFunction = () => {
   ];
 };
 
+// Todo: Branding is Calico Cut Pants
+
 export default function Index() {
   return (
     <div className="flex h-screen items-center justify-center">

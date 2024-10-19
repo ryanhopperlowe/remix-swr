@@ -23,5 +23,11 @@ export default {
     },
   },
   darkMode: "class",
-  plugins: [nextui()],
+  plugins: [
+    nextui({
+      themes: {
+        light: {},
+      },
+    }),
+  ],
 } satisfies Config;

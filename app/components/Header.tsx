@@ -1,17 +1,34 @@
-import { Button } from "@nextui-org/react";
-import { ShoppingBasketIcon } from "lucide-react";
+import { Badge, Button } from "@nextui-org/react";
+import { Link } from "@remix-run/react";
+import { Loader, ShoppingBasketIcon } from "lucide-react";
 
-export function Header() {
+export function Header({
+  itemCount,
+  email,
+  isLoading,
+}: {
+  itemCount: number;
+  email: string;
+  isLoading: boolean;
+}) {
   return (
     <div className="flex flex-col">
-      <header className="flex items-center justify-between p-4 italic text-primary">
-        <div />
+      <header className="grid w-full items-center grid-cols-3 p-4 italic text-primary">
+        <div>{isLoading ? <Loader className="animate-spin" /> : null}</div>
 
-        <h1 className="text-2xl font-bold">Calico Cut Pants</h1>
+        <Link to="/">
+          <h1 className="text-2xl text-center font-bold">Calico Cut Pants</h1>
+        </Link>
 
-        <Button isIconOnly>
-          <ShoppingBasketIcon />
-        </Button>
+        <div className="flex items-center justify-end gap-4">
+          <p>{email}</p>
+
+          <Badge content={itemCount} color="primary">
+            <Button isIconOnly as={Link} to="/cart" variant="light">
+              <ShoppingBasketIcon />
+            </Button>
+          </Badge>
+        </div>
       </header>
 
       <div className="bg-primary text-primary-foreground w-full p-4 flex justify-center">

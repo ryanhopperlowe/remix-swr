@@ -8,3 +8,5 @@ if (!global.__prisma) {
 }
 global.__prisma.$connect();
 export const prisma = global.__prisma;
+export const userEmail = "ryan@mail.com";
+export const userId = "cm2e523kj00009idobjjspj8w";

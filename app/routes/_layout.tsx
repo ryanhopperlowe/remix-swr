@@ -1,17 +1,9 @@
-import {
-  ClientLoaderFunction,
-  json,
-  Outlet,
-  useNavigation,
-} from "@remix-run/react";
-import { cacheClientLoader, useCachedLoaderData } from "remix-client-cache";
+import { json, Outlet, useLoaderData, useNavigation } from "@remix-run/react";
 import { getCart, getUser } from "~/api.server";
 import { Footer } from "~/components/Footer";
 import { Header } from "~/components/Header";
 
 export async function loader() {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-
   const [cart, user] = await Promise.all([getCart(), getUser()]);
 
   const itemCount = cart.items.reduce((acc, item) => acc + item.quantity, 0);
@@ -20,12 +12,8 @@ export async function loader() {
   return json({ itemCount, email });
 }
 
-export const clientLoader: ClientLoaderFunction = (args) =>
-  cacheClientLoader(args, { key: "cart-count" });
-clientLoader.hydrate = true;
-
 export default function Layout() {
-  const { itemCount, email } = useCachedLoaderData<typeof loader>();
+  const { itemCount, email } = useLoaderData<typeof loader>();
 
   const isLoading = useNavigation().state === "loading";
 

@@ -7,14 +7,13 @@ import {
 } from "@nextui-org/react";
 import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import {
-  ClientLoaderFunction,
   Form,
   json,
   useFetcher,
+  useLoaderData,
   useSearchParams,
 } from "@remix-run/react";
 import { Loader } from "lucide-react";
-import { cacheClientLoader, useCachedLoaderData } from "remix-client-cache";
 import { addToCart, getItems, getTags, hasIntent } from "~/api.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -35,11 +34,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   return json(null);
 };
 
-export const clientLoader: ClientLoaderFunction = cacheClientLoader;
-clientLoader.hydrate = true;
-
 export default function Shop() {
-  const { items, tags } = useCachedLoaderData<typeof loader>();
+  const { items, tags } = useLoaderData<typeof loader>();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTags = new Set(searchParams.get("tags")?.split(","));
@@ -92,11 +88,7 @@ export default function Shop() {
             </CardBody>
 
             <CardFooter>
-              <addToCartFetcher.Form
-                method="post"
-                action="/shop"
-                className="w-full"
-              >
+              <addToCartFetcher.Form method="post" className="w-full">
                 <input type="hidden" name="intent" value="add-to-cart" />
                 <input type="hidden" name="productId" value={item.id} />
 

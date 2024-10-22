@@ -1,18 +1,7 @@
 import { Button, Card } from "@nextui-org/react";
 import { ActionFunctionArgs } from "@remix-run/node";
-import {
-  ClientActionFunctionArgs,
-  ClientLoaderFunction,
-  json,
-  Link,
-  useFetcher,
-} from "@remix-run/react";
+import { json, Link, useFetcher, useLoaderData } from "@remix-run/react";
 import { Loader, MinusIcon, PlusIcon, TrashIcon } from "lucide-react";
-import {
-  cacheClientLoader,
-  decacheClientLoader,
-  useCachedLoaderData,
-} from "remix-client-cache";
 import { clearCart, getCart, hasIntent, updateQuantity } from "~/api.server";
 
 export async function loader() {
@@ -23,33 +12,23 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
 
   if (hasIntent(formData, "updateQuantity")) {
-    await updateQuantity(formData);
+    const response = await updateQuantity(formData);
+    return json({ updatedId: response.itemId });
   }
 
   if (hasIntent(formData, "clearCart")) {
     await clearCart();
+    return json({ isCleared: true });
   }
-
-  return json({});
 };
 
-export const clientLoader: ClientLoaderFunction = cacheClientLoader;
-clientLoader.hydrate = true;
-
-export const clientAction = (args: ClientActionFunctionArgs) =>
-  decacheClientLoader(args, { key: "/cart" });
-
 export default function Cart() {
-  const { cart } = useCachedLoaderData<typeof loader>();
+  const { cart } = useLoaderData<typeof loader>();
   const { items = [] } = cart || {};
 
-  const clearCart = useFetcher();
-
-  const updateQuantity = useFetcher();
-  const updatingItem =
-    updateQuantity.state === "submitting"
-      ? updateQuantity.formData?.get("itemId")
-      : undefined;
+  const clearCart = useFetcher<{ isCleared: boolean }>();
+  const updateQuantity = useFetcher<{ updatedId: string | null }>();
+  const updatingItem = getUpdatingId();
 
   return (
     <div className="h-full flex flex-col gap-4">
@@ -109,7 +88,7 @@ export default function Cart() {
             variant="flat"
             className="w-full"
             startContent={
-              clearCart.state === "submitting" ? (
+              clearCart.state !== "idle" ? (
                 <Loader className="animate-spin" />
               ) : null
             }
@@ -128,4 +107,16 @@ export default function Cart() {
       )}
     </div>
   );
+
+  function getUpdatingId() {
+    if (updateQuantity.state === "loading") {
+      return updateQuantity.data?.updatedId;
+    }
+
+    if (updateQuantity.state === "submitting") {
+      return updateQuantity.formData?.get("itemId");
+    }
+
+    return null;
+  }
 }

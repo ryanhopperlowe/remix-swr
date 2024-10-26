@@ -11,6 +11,8 @@ export function Header({
   email: string;
   isLoading: boolean;
 }) {
+  console.log("rerender");
+
   return (
     <div className="flex flex-col">
       <header className="grid w-full items-center grid-cols-3 p-4 italic text-primary">

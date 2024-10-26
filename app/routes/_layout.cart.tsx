@@ -1,12 +1,16 @@
 import { Button, Card } from "@nextui-org/react";
 import { ActionFunctionArgs } from "@remix-run/node";
-import { json, Link, useFetcher, useLoaderData } from "@remix-run/react";
+import {
+  ClientActionFunctionArgs,
+  json,
+  Link,
+  useFetcher,
+} from "@remix-run/react";
 import { Loader, MinusIcon, PlusIcon, TrashIcon } from "lucide-react";
-import { clearCart, getCart, hasIntent, updateQuantity } from "~/api.server";
-
-export async function loader() {
-  return json({ cart: await getCart() });
-}
+import useSWR, { mutate } from "swr";
+import { getCart } from "~/api.client";
+import { clearCart, hasIntent, updateQuantity } from "~/api.server";
+import { LoadingPage } from "~/components/LoadingPage";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
@@ -22,13 +26,25 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 };
 
+export const clientAction = async ({
+  serverAction,
+}: ClientActionFunctionArgs) => {
+  const response = await serverAction();
+  await mutate("cart");
+  return response;
+};
+
 export default function Cart() {
-  const { cart } = useLoaderData<typeof loader>();
+  const { data: cart, isLoading } = useSWR("cart", getCart);
   const { items = [] } = cart || {};
 
   const clearCart = useFetcher<{ isCleared: boolean }>();
   const updateQuantity = useFetcher<{ updatedId: string | null }>();
   const updatingItem = getUpdatingId();
+
+  if (isLoading) return <LoadingPage />;
+
+  if (!cart) return <div>No cart found</div>;
 
   return (
     <div className="h-full flex flex-col gap-4">
@@ -109,7 +125,7 @@ export default function Cart() {
   );
 
   function getUpdatingId() {
-    if (updateQuantity.state === "loading") {
+    if (isLoading) {
       return updateQuantity.data?.updatedId;
     }
 

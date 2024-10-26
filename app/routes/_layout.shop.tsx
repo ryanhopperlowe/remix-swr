@@ -7,6 +7,8 @@ import {
 } from "@nextui-org/react";
 import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import {
+  ClientActionFunction,
+  ClientActionFunctionArgs,
   Form,
   json,
   useFetcher,
@@ -14,34 +16,67 @@ import {
   useSearchParams,
 } from "@remix-run/react";
 import { Loader } from "lucide-react";
-import { addToCart, getItems, getTags, hasIntent } from "~/api.server";
+import useSWR, { mutate } from "swr";
+import { getItems, getTags } from "~/api.client";
+import { addToCart, hasIntent } from "~/api.server";
+import { LoadingPage } from "~/components/LoadingPage";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const clientLoader = async ({ request }: LoaderFunctionArgs) => {
   const { searchParams } = new URL(request.url);
+  const activeTags = searchParams.get("tags")?.split(",");
 
-  const [items, tags] = await Promise.all([getItems(searchParams), getTags()]);
-
-  return json({ items, tags });
+  return json({ activeTags });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+  console.log("action");
+
   const formData = await request.formData();
+  const shouldMutate: string[] = [];
 
   if (hasIntent(formData, "add-to-cart")) {
     await addToCart(formData);
+
+    shouldMutate.push("cart");
   }
 
-  return json(null);
+  return json({ shouldMutate });
+};
+
+export const clientAction: ClientActionFunction = async ({
+  serverAction,
+}: ClientActionFunctionArgs) => {
+  console.log("clientAction");
+
+  const { shouldMutate } = (await serverAction()) as {
+    shouldMutate: string[];
+  };
+
+  await Promise.all(shouldMutate.map((key) => mutate(key)));
+  return null;
 };
 
 export default function Shop() {
-  const { items, tags } = useLoaderData<typeof loader>();
+  const { activeTags } = useLoaderData<typeof clientLoader>();
+  const [, setSearchParams] = useSearchParams();
 
-  const [searchParams, setSearchParams] = useSearchParams();
-  const activeTags = new Set(searchParams.get("tags")?.split(","));
+  const { data: items, isLoading: itemsLoading } = useSWR(
+    ["items", activeTags],
+    () => getItems({ tags: activeTags })
+  );
+  const { data: tags, isLoading: tagsLoading } = useSWR("tags", getTags);
+
   const addToCartFetcher = useFetcher();
 
   const addingToCart = addToCartFetcher.formData?.get("productId") as string;
+
+  if (tagsLoading) {
+    return <LoadingPage />;
+  }
+
+  if (!tags) {
+    return <div>No tags found</div>;
+  }
 
   return (
     <div className="space-y-4">
@@ -57,22 +92,24 @@ export default function Shop() {
           Clear
         </Button>
 
-        {tags.map((tag) => (
+        {tags?.map((tag) => (
           <Button
             key={tag.name}
             type="submit"
             name="tags"
             value={tag.name}
             color="primary"
-            variant={activeTags.has(tag.name) ? "solid" : "light"}
+            variant={activeTags?.includes(tag.name) ? "solid" : "light"}
           >
             {tag.name}
           </Button>
         ))}
       </Form>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {items.map((item) => (
+      {itemsLoading && <LoadingPage />}
+
+      <div className="w-full grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {items?.map((item) => (
           <Card key={item.id} className="flex-1">
             <CardHeader className="flex justify-between">
               <p>{item.name}</p>

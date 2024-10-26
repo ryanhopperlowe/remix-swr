@@ -47,6 +47,8 @@ export default function Shop() {
 
   const addingToCart = addToCartFetcher.formData?.get("productId") as string;
 
+  // useRevalidateOnFocus();
+
   return (
     <div className="space-y-4">
       <Form method="get" className="flex gap-4">

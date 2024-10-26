@@ -47,57 +47,69 @@ export default function Cart() {
 
   const updateQuantity = useFetcher();
   const updatingItem =
-    updateQuantity.state === "submitting"
+    updateQuantity.state !== "idle"
       ? updateQuantity.formData?.get("itemId")
       : undefined;
 
+  // useRevalidateOnFocus();
+
   return (
     <div className="h-full flex flex-col gap-4">
-      {items.map(({ item, quantity }) => (
-        <Card
-          className="p-4 w-full flex flex-row items-center justify-between"
-          key={item.id}
-        >
-          <div className="flex gap-4 items-center">
-            <p>{item.name}</p>
-          </div>
+      {items.map(({ item, quantity }) => {
+        const isLoading = updatingItem === item.id;
 
-          <updateQuantity.Form
-            className="flex justify-end items-center gap-2"
-            method="post"
+        const getValue = () => {
+          if (isLoading)
+            return Number(updateQuantity.formData?.get("quantity"));
+          return quantity;
+        };
+
+        return (
+          <Card
+            className="p-4 w-full flex flex-row items-center justify-between"
+            key={item.id}
           >
-            <input type="hidden" name="intent" value="updateQuantity" />
-            <input type="hidden" name="itemId" value={item.id} />
-            <input type="hidden" name="cartId" value={cart.id} />
+            <div className="flex gap-4 items-center">
+              <p>{item.name}</p>
+            </div>
 
-            {updatingItem === item.id && <Loader className="animate-spin" />}
-
-            <Button
-              isIconOnly
-              name="quantity"
-              value={String(quantity + 1)}
-              type="submit"
-              size="sm"
-              variant="light"
+            <updateQuantity.Form
+              className="flex justify-end items-center gap-2"
+              method="post"
             >
-              <PlusIcon />
-            </Button>
+              <input type="hidden" name="intent" value="updateQuantity" />
+              <input type="hidden" name="itemId" value={item.id} />
+              <input type="hidden" name="cartId" value={cart.id} />
 
-            <div>{quantity}</div>
+              {updatingItem === item.id && <Loader className="animate-spin" />}
 
-            <Button
-              isIconOnly
-              variant="light"
-              name="quantity"
-              size="sm"
-              value={String(quantity - 1)}
-              type="submit"
-            >
-              {quantity > 1 ? <MinusIcon /> : <TrashIcon />}
-            </Button>
-          </updateQuantity.Form>
-        </Card>
-      ))}
+              <Button
+                isIconOnly
+                name="quantity"
+                value={String(quantity + 1)}
+                type="submit"
+                size="sm"
+                variant="light"
+              >
+                <PlusIcon />
+              </Button>
+
+              <div>{getValue()}</div>
+
+              <Button
+                isIconOnly
+                variant="light"
+                name="quantity"
+                size="sm"
+                value={String(quantity - 1)}
+                type="submit"
+              >
+                {quantity > 1 ? <MinusIcon /> : <TrashIcon />}
+              </Button>
+            </updateQuantity.Form>
+          </Card>
+        );
+      })}
 
       {items.length ? (
         <clearCart.Form method="post">

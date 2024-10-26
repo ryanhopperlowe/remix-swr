@@ -1,6 +1,6 @@
 import { Badge, Button } from "@nextui-org/react";
 import { Link } from "@remix-run/react";
-import { Loader, ShoppingBasketIcon } from "lucide-react";
+import { ClockIcon, Loader, ShoppingBasketIcon } from "lucide-react";
 
 export function Header({
   itemCount,
@@ -16,11 +16,15 @@ export function Header({
       <header className="grid w-full items-center grid-cols-3 p-4 italic text-primary">
         <div>{isLoading ? <Loader className="animate-spin" /> : null}</div>
 
-        <Link to="/">
+        <Link to="/shop">
           <h1 className="text-2xl text-center font-bold">Calico Cut Pants</h1>
         </Link>
 
         <div className="flex items-center justify-end gap-4">
+          <Button isIconOnly variant="light" as={Link} to="/time-since">
+            <ClockIcon />
+          </Button>
+
           <p>{email}</p>
 
           <Badge content={itemCount} color="primary">

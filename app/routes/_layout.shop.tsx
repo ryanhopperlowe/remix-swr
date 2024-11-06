@@ -29,8 +29,6 @@ export const clientLoader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  console.log("action");
-
   const formData = await request.formData();
   const shouldMutate: string[] = [];
 
@@ -46,8 +44,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 export const clientAction: ClientActionFunction = async ({
   serverAction,
 }: ClientActionFunctionArgs) => {
-  console.log("clientAction");
-
   const { shouldMutate } = (await serverAction()) as {
     shouldMutate: string[];
   };

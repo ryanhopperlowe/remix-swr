@@ -3,7 +3,9 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  await prisma.user.create({ data: { email: "ryan@mail.com" } });
+  const user = await prisma.user.create({ data: { email: "ryan@mail.com" } });
+
+  await prisma.cart.create({ data: { userId: user.id } });
 
   await prisma.item.create({
     data: {
